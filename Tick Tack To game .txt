@@ -1,0 +1,247 @@
+#include<iostream>
+#include<windows.h>
+using namespace std;
+#include<conio.h>
+#include<math.h>
+#include<fstream>
+
+void gotoRowCol(int rpos, int cpos)
+{
+int xpos=cpos, ypos = rpos;
+COORD scrn;
+HANDLE hOuput = GetStdHandle(STD_OUTPUT_HANDLE);
+scrn.X = cpos;
+scrn.Y = rpos;
+SetConsoleCursorPosition(hOuput, scrn);
+}
+
+void sleep(int m)
+{
+        for(int j=0;j<m*21000;j++)
+        {
+
+        }
+}
+
+void init(char a[],int dim){
+    for (int i=0;i<dim*dim;i++){
+        a[i]='___';
+    }
+}
+void print_board(char a[],int dim){
+    for (int i=0;i<dim*dim;i++){
+        cout<<" "<<a[i]<<" ";
+        if((i+1)%dim==0){
+            cout<<endl;
+        }
+    }
+}
+void ask_for_move(int &ri, int &ci, int &turn){
+    cout<<"player"<<turn+1<<"turn"<<endl;
+    cout<<"Enter row # :";
+    cin>>ri;
+    cout<<"Enter coloumn # :";
+    cin>>ci;
+}
+void change_turn(int &turn){
+    if(turn==0){
+        turn=1;
+    }
+    else{
+        turn=0;
+    }
+}
+
+int map2d_to_1d(int ri,int ci,int dim){
+    return ((ri-1)*dim + (ci-1));
+}
+
+void print_on_board(char a[],int dim, int ri, int ci, int turn){
+    int index= map2d_to_1d(ri,ci,dim);
+    a[index]=turn;
+}
+bool check_legality(char a[],int ri, int ci, int dim){
+    int index= map2d_to_1d(ri,ci,dim);
+    if(ri>dim | ci>dim | ri<1 | ci<1 | a[index]!='_')
+    {
+        return false;
+    }
+    return true;
+}
+bool is_draw(char a[],int dim){
+    for (int ri=1;ri<=dim;ri++){
+        for (int ci=1;ci<=dim;ci++){
+            int index = map2d_to_1d(ri,ci,dim);
+            if(a[index] != '_'){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+bool diagonal1_win(char B[], int dim, char turn)
+{
+    int counter=0;
+    for(int ci=1; ci<=dim; ci++ )
+    {
+        int ri=ci;
+        int index=map2d_to_1d(ri,ci,dim);
+        if (B[index]==turn)
+        {
+            counter++;
+        }
+    }
+    if(counter==dim)
+        {
+            return true;
+        }
+    return false;
+}
+
+bool vertical_win(char B[], int dim, char turn)
+{
+    for(int ci=1; ci<=dim; ci++)
+    {
+        int counter=0;
+        for(int ri=1; ri<=dim; ri++)
+        {
+            int index=map2d_to_1d(ri,ci,dim);
+            if(B[index]==turn)
+            {
+                counter++;
+            }
+        }
+            if(counter==dim)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool horizontal_win(char B[], int dim, char turn)
+{
+
+    for(int ri=1; ri<=dim; ri++)
+    {
+        int counter=0;
+        for(int ci=1; ci<=dim; ci++)
+        {
+            int index=map2d_to_1d(ri,ci,dim);
+            if(B[index]==turn)
+            {
+                counter++;
+            }
+        }
+        if(counter==dim)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool diagonal2_win(char B[], int dim, char turn)
+{
+    int counter=0;
+    int ri=1;
+    for(int ci=dim; ci>0; ci-- )
+    {
+        int index=map2d_to_1d(ri,ci,dim);
+        if (B[index]==turn)
+        {
+            counter++;
+            ri++;
+        }
+    }
+    if(counter==dim)
+        {
+            return true;
+        }
+    return false;
+}
+
+bool is_win(char a[], int dim, char turn)
+{
+    return (horizontal_win(a, dim, turn) || vertical_win(a, dim, turn) || diagonal1_win(a, dim, turn) || diagonal2_win(a, dim, turn));
+}
+void writer (int &dim, int &turn,char a[])
+{
+    ofstream write("tictactoe.txt");
+    write<<dim<<" "<<turn<<endl;
+    for(int i=0;i<=dim*dim;i++)
+    {
+        write<<a[i];
+
+    }
+}
+void reader(int &dim, int &turn,char a[])
+{
+    ifstream read("tictactoe.txt");
+    read>>dim>>turn;
+    for(int i=0;i<=dim*dim;i++)
+    {
+        read>>a[i];
+    }
+}
+
+
+int main(){
+    char p_symbol[2];
+    p_symbol[0]='X';
+    p_symbol[1]='0';
+    int ri;
+    int ci;
+    int num;
+    cout<<"For resuming previous, game press 1 otherwise press 0";
+    cin>>num;
+    int turn;
+    int t=0;
+    int dim;
+    char board[dim*dim];
+    if(num==1)
+    {
+        reader(dim,turn,board);
+        system("CLS");
+    }
+    else
+    {
+        turn=0;
+        cout<<"Enter the num for game grid: "<<endl;
+        cin>> dim;
+        board[dim*dim];
+        init(board,dim);
+        system("CLS");
+    }
+    writer(dim,turn,board);
+    do{
+        gotoRowCol(2,0);
+        print_board(board,dim);
+        do{
+        ask_for_move(ri,ci,turn);}
+        while (check_legality(board,ri,ci,dim)==false);
+    print_on_board(board,dim,ri,ci,p_symbol[turn]);
+    if (is_win(board,dim,p_symbol[turn])==true)
+    {
+        t=1;
+        break;
+    }
+
+    change_turn(turn);
+    writer(dim,turn,board);
+    }
+    while(is_draw(board,dim)==false);
+    print_board(board,dim);
+    if(t==0)
+    {
+        cout<<"Game is draw...!!!";
+    }
+    else{
+    if(turn==0)
+    {
+        cout<<"Player 1 wins the game "<<endl;
+    }
+    else if (turn==1)
+    {
+        cout<<"Player 2 wins the game "<<endl;
+    }
+}
+}
